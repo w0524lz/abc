@@ -1,0 +1,173 @@
+
+案例4:编写一个判断脚本
+在 server0 上创建 /root/foo.sh 脚本
+1)当运行/root/foo.sh redhat,输出为fedora
+2)当运行/root/foo.sh fedora,输出为redhat
+3)当没有任何参数或者参数不是redhat 或者fedora时, 
+其错误输出产生以下信息: /root/foo.sh redhat|fedora
+
+[root@server0 ~]# vim  /root/foo.sh
+#!/bin/bash
+if  [ $# -eq 0 ];then                     #判断位置变量的个数是否为0个
+  echo '/root/foo.sh redhat|fedora'  >&2  #将正确的输出结果变成错误的输出
+  exit  2                                 #脚本退出返回值
+elif [ $1  == redhat ];then
+  echo fedora
+elif [ $1 == fedora ];then
+  echo redhat
+else
+  echo '/root/foo.sh redhat|fedora' >&2  #将正确的输出结果变成错误的输出
+  exit 3                                  #脚本退出返回值
+fi       
+
+
+##################################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+在 server0 上创建 /root/batchusers 脚本
+1)此脚本要求提供用户名列表文件作为参数
+2)如果没有提供参数,此脚本应该给出提示 Usage:/root/batchusers,退出并返回相应值
+   if  [ $# -eq 0 ];then
+     echo 'Usage:/root/batchusers' >&2
+     exit 2
+   fi
+
+3)如果提供一个不存在的文件,此脚本应该给出提示 Input file not found,退出并返回相应值
+   if  [ -f  $1  ];then
+
+      for  i  in  `cat  $1`
+      do
+       useradd -s /bin/false  $i
+       echo $i成功
+     done 
+
+    else
+     echo 'Input file not found' >&2
+     exit 2
+   fi
+4)新用户的登录Shell为 /bin/false ,无需设置密码
+5)用户列表测试文件:
+ http://classroom/pub/materials/userlist
+
+[root@server0 ~]# vim  /root/batchusers 
+#!/bin/bash
+if  [ $# -eq 0 ];then
+   echo 'Usage:/root/batchusers' >&2
+   exit 2
+fi
+
+if  [ -f  $1  ];then
+
+   for  i  in  `cat  $1`
+    do
+      useradd -s /bin/false  $i
+      echo $i成功
+    done 
+
+else
+     echo 'Input file not found' >&2
+     exit 2
+fi
+
+############################################################
+防火墙 处理 端口转发 功能
+
+虚拟机Server0:基本的Web服务
+
+[root@server0 ~]# yum -y install httpd
+
+[root@server0 ~]# echo '<h1>NSD1802' > /var/www/html/index.html
+[root@server0 ~]# cat /var/www/html/index.html
+
+[root@server0 ~]# systemctl restart httpd
+[root@server0 ~]# systemctl enable httpd
+
+[root@server0 ~]# firefox  172.25.0.11
+
+实现默认区域为public,在默认区域里添加允许客户端访问http
+# firewall-cmd --permanent --zone=public --add-service=http
+# firewall-cmd --reload 
+# firewall-cmd --zone=public --list-all 
+
+
+ 服务或协议的端口 : 标识服务或协议
+
+ 常见的协议： 
+	http    超文本传输协议               默认端口  80
+	https   安全的超文本传输协议      默认端口 443
+	ftp     文件传输协议                  默认端口  21
+	tftp    简单文件传输协议            默认端口  69
+	telnet  远程管理协议                  默认端口  23
+	dns     域名解析协议                  默认端口  53
+	smtp    邮件协议                        默认端口  25
+	pop3    收邮件协议                     默认端口  110
+	snmp    简单的管理协议               默认端口  161
+ 
+
+虚拟机Desktop0 访问 虚拟机Server0 5423端口
+ 
+  将访问 虚拟机Server0 5423端口的请求  转发到  虚拟机Server0 80端口
+
+        虚拟Desktop0   ------->172.25.0.11:5423
+
+       虚拟机Server0   -----172.25.0.11:5423------>172.25.0.11:80
+
+虚拟机Server0 
+# firewall-cmd --permanent --zone=public 
+--add-forward-port=port=5423:proto=tcp:toport=80
+
+# firewall-cmd --reload 
+# firewall-cmd --zone=public  --list-all 
+
+虚拟机Desktop0
+# firefox 172.25.0.11:5423
+
+################################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

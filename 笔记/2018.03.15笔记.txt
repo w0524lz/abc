@@ -1,0 +1,262 @@
+教学环境介绍
+
+使用教学虚拟机
+
+
+
+• 每个学员机上有三台预先配置好的虚拟机
+• 真机上操作：控制教学用虚拟机
+– 格式:rht-vmctl  控制指令   虚拟机名
+– 常用控制指令: reset(还原)
+
+[root@room9pc01 ~]# rht-vmctl reset classroom
+[root@room9pc01 ~]# rht-vmctl reset server
+[root@room9pc01 ~]# rht-vmctl reset desktop
+
+  虚拟机Server
+          IP地址：172.25.0.11
+                  主机名：server0.example.com
+                  系统版本：RHEL 7.0
+
+  虚拟机Desktop
+          IP地址：172.25.0.10
+                  主机名：desktop0.example.com
+                  系统版本：RHEL 7.0
+
+##############################################################
+cron计划任务
+
+cron任务概述
+• 用途:按照设置的时间间隔为用户反复执行某一项固定的系统任务
+
+• 软件包:cronie、crontabs
+• 系统服务:crond
+• 日志文件:/var/log/crond
+
+
+
+如何编写crontab任务记录
+–  分     时     日     月       周      任务命令行(绝对路径)
+
+     *     *       *      *       *      
+       
+	* : 匹配范围内任意时间
+	, : 分隔多个不连续的时间点
+	- : 指定连续时间范围
+	/n :指定时间频率,每n ...
+
+
+• 使用 crontab 命令
+– 编辑:crontab -e [-u 用户名]
+
+   每分钟记录    当前系统的时间， 写入到/opt/time.txt
+
+
+虚拟机Server
+[root@server0 ~]# date
+2018年 03月 15日 星期四 10:10:27 CST
+[root@server0 ~]# date > /opt/time.txt
+[root@server0 ~]# cat /opt/time.txt
+
+[root@server0 ~]# date >> /opt/time.txt
+[root@server0 ~]# cat /opt/time.txt
+
+[root@server0 ~]# crontab -e -u root
+
+*/1  *  *  *  *    date >> /opt/time.txt
+
+
+[root@server0 ~]# cat /opt/time.txt
+
+#######################################################
+grep命令扩展
+
+  匹配空行：  ^$
+
+[root@server0 ~]# grep -v '^$'  /etc/default/useradd
+# useradd defaults file
+GROUP=100
+HOME=/home
+INACTIVE=-1
+EXPIRE=
+SHELL=/bin/bash
+SKEL=/etc/skel
+CREATE_MAIL_SPOOL=yes
+
+  显示一个/etc/login.defs 配置文件有效配置（去掉以#开头的 注释   去掉空行）
+
+[root@server0 ~]# grep -v  '^#' /etc/login.defs
+
+[root@server0 ~]# grep -v  '^#' /etc/login.defs     |  grep -v '^$' 
+
+
+ # grep -v  '^#' /etc/login.defs     |   grep -v '^$'  |   cat -n
+
+###############################################################
+
+find 按条件查找文件
+• 根据预设的条件递归查找对应的文件
+– find [目录] [条件1] [-a|-o] [条件2] ...
+
+– 常用条件表示:
+  -type 类型(f文件、d目录、l快捷方式)
+  -name "文档名称"
+  -size +|-文件大小(k、M、G)
+  -user 用户名
+
+
+[root@server0 ~]# find /boot/ -type l     #查找是快捷方式
+/boot/grub/menu.lst
+[root@server0 ~]# ls -l /boot/grub/menu.lst 
+
+[root@server0 ~]# find /boot/ -type d     #查找是目录
+
+[root@server0 ~]# find /boot/ -type f     #查找是文本文件
+
+ 请显示/etc目录下以 .conf结尾的？(包含子目录)
+
+[root@server0 ~]# find /etc  -name  "*.conf"
+
+ 请显示/etc目录下以 .conf结尾的？(不包含子目录)
+[root@server0 ~]# ls /etc/*.conf
+
+
+[root@server0 ~]# mkdir /root/nsd1802
+[root@server0 ~]# touch /root/nsd01.txt
+[root@server0 ~]# touch /root/nsd18.txt
+
+[root@server0 ~]# find /root/ -name "nsd*"
+
+[root@server0 ~]# find /root/ -name "nsd*"      -type f
+
+[root@server0 ~]# find /root/ -name "nsd*"      -type d
+
+
+-size +|-文件大小(k、M、G)
+
+[root@server0 ~]# find /boot/ -size +10M
+
+
+[root@server0 ~]# find /boot/ -size +300k
+
+
+[root@server0 ~]# find /boot/ -size -10M
+
+
+ -user 用户名
+
+[root@server0 ~]# find / -user student  -type f
+
+[root@server0 ~]# useradd wangwu
+
+[root@server0 ~]# find / -user wangwu   
+
+[root@server0 ~]# find / -user wangwu  -type d  
+
+#############################################################
+
+ find结果处理
+
+[root@server0 ~]# rm -rf /opt/*
+[root@server0 ~]# ls /opt/
+[root@server0 ~]# find /boot/ -size +300k
+
+• 使用find命令的 -exec 操作
+– find .. .. -exec 处理命令 {} \;
+– 优势:以 {} 代替每一个结果,逐个处理,遇 \; 结束
+
+# find /boot/ -size +300k    -exec cp -r {} /opt   \;
+
+# ls /opt/
+
+# find  /   -user student  -type f   
+
+# mkdir /root/findfile
+
+# find  /   -user student  -type f  -exec cp {}  /root/findfile \;
+
+# ls /root/findfile
+
+################################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

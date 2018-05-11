@@ -1,0 +1,281 @@
+shell 第一天
+ 
+参考：PPT 和 案例 
+shell 和 bash 的区别
+
+shell：解释器（概述）（汽车；翻译官）
+bash：解释器（具体的描述，有具体的型号和版本）（宝马车；英文翻译官）
+将命令翻译成二进制给计算机
+cat /etc/shells     #查看电脑现有的解释器 （相当于自己的车库都有什么车）
+yum -y install ksh  #下载解释器
+cat /etc/shells     #查看解释器的库  已有ksh
+
+永久改解释器
+usermod -s /bin/ksh  用户名       # 针对已存在的用户
+useradd -s /bin/ksh  用户名       # 针对新建的用户
+
+shell  的使用方式
+
+交互式：人工干预
+非交互式：执行速度高，效率高 
+
+默认可以查看1000条历史记录   /etc/profile
+46行  HISTSIZE=1000
+查看历史命令： !156   #执行第156行命令 ；     !cat 
+清空历史： history -c  
+永久清除历史：  rm -rf  .bash_history
+ 
+alias   #设置别名   ；    unalias  #取消别名
+别名设置一般放在用户的.bashrc 文件内
+ 
+ls -ld /etc            #查看/etc的详细信息  输出结果默认输出到屏幕上
+ls -ld /etc > out.ext  #将正确的输出结果重定向到文件 ;覆盖重定向
+ls -ld /etc >> out.ext  #将正确的输出结果重定向到文件 ;追加重定向
+
+ls aaa  2> out.txt       #将错误的信息重定向到文件 ； 覆盖重定向  
+ls aaa 2>> out.txt       # 将错误的信息重定向到文件 ； 追加重定向
+
+ls aaa &> out.txt        #混合重定向  
+  
+ls /etc/fstab  aaa  > out.txt  2>aaa.txt  #将正确输出重定向到out.txt文件中  将错误输入重定向到 aaa.txt文件中
+   
+vim /test.sh
+#!/bin/bash
+ for i in {1..20}
+ do
+  useradd $i  2>> 2.txt
+ echo 123 | passwd --stdin $i > /dev/null
+done
+
+
+重点向输入   例如：echo 123 | mail -s '你好'  stuent  #写邮件
+            mail -s '你好'  stuent  < /etc/passwd  #导入邮件内容
+
+ ls /etc | wc -l  #统计个数  管道的作用: 将多条命令组合在一起，实现强大的功能!
+
+简单的shell脚本设计：
+  1：脚本声明     #!/bin/bash
+  2：注释 Author:作者的邮箱 （可以写中文）
+   .....
+  3: 代码（命令）
+
+ 
+ ./test.sh    #当前目录下的test.sh
+
+
+http://content.example.com/rhel7.0/x86_64/dvd
+例题：
+1：用脚步搭建YUM仓库
+2：用脚本安装vsftp
+#!/bin/bash
+rm -rf /etc/yum.repos.d/*.repo
+echo "[rhel7]
+name=rhel7
+baseurl=http://content.example.com/rhel7.0/x86_64/dvd
+gpgcheck=0" > /etc/yum.repos.d/nsd.repo
+yum repolist
+yum -y install vsftpd
+
+
+脚本的执行方法： 一： ./first.sh       #相对路径
+                   /root/first.sh  #绝对路径
+用脚本去执行： bash ；sh 执行脚本的时候开启子进程
+ ! 在所有的执行脚本命令中 source 执行脚本的时候不开启子进程  （开和不开子进程，执行脚本的位置不一样 ） 
+ bash -x test.sh  将脚本执行的过程显示出来 （排错的时候用）
+
+
+！！！！！ 变量 （变量在脚本里可以重复使用的） 
+      由字母 ，数字，下划线 组成   ！不能以数字开头！
+
+[root@server0 ~]# test=1        #等号两边不能有空格
+[root@server0 ~]# echo $testRMB
+
+[root@server0 ~]# echo $test
+11
+[root@server0 ~]# echo ${test}RMB
+11RMB
+[root@server0 ~]# echo $test-RMB
+11-RMB
+[root@server0 ~]# unset test   #取消变量
+[root@server0 ~]# echo $test-RMB
+-RMB
+
+！！！！！！系统自带的变量一般都是大写的
+
+[root@server0 ~]# echo $USER
+root
+[root@server0 ~]# echo $UID
+0
+[root@server0 ~]# echo $PWD
+/root
+[root@server0 ~]# echo $HOSTNAME
+server0.example.com
+[root@server0 ~]# echo $RANDOM    [root@server0 ~]# echo $USER
+root
+
+[root@server0 ~]# echo $UID
+0
+[root@server0 ~]# echo $PWD
+/root
+[root@server0 ~]# echo $HOSTNAME
+server0.example.com
+[root@server0 ~]# echo $RANDOM   #取0-32767 之间的随机整数
+8736
+[root@server0 ~]# echo $RANDOM
+6584
+[root@server0 ~]# echo $RANDOM
+11416
+
+[root@server0 ~]# echo $SHELL    #现在在用的是什么解释器
+/bin/bash
+
+[root@server0 ~]# echo $PS1     # 默认PS1
+[\u@\h \W]\$
+
+[root@server0 ~]# PS1=[wangfei]   # 一级提示符  没有作用 了解即可
+[wangfei]
+
+[root@server0 ~]# env  #查看所有环境变量
+[root@server0 ~]# set  | wc -l  #查看本机所有的变量
+2454
+
+
+
+[root@server0 ~]# vim /root/aa.sh  1 2 3 
+#!/bin/bash
+echo $0   #输出脚本自己
+echo $1   #输出第一个变量  1
+echo $2   #输出第2个变量   2
+echo $3   #输出第3个变量    3
+echo $*   #输出所有变量   1 2 3
+echo $#   #输出变量的个数   3
+echo $$   #显示脚本的PID号  ***
+ 
+echo $?  (只能问上一个命令正确不正确)
+
+创建用户的脚本：
+[root@server0 ~]# vim /bin/myadd 
+#!/bin/bash
+
+useradd $1
+echo $2 | passwd --stdin $1
+
+[root@server0 ~]# myadd harry 123
+更改用户 harry 的密码 。
+passwd：所有的身份验证令牌已经成功更新。
+
+三种引号对赋值的影响
+1）双引号的应用
+使用双引号可以界定一个完整字符串。 #加引号之后是一个整体
+
+[root@server0 ~]# test=11 22 33
+bash: 22: 未找到命令...
+[root@server0 ~]# test="11 22 33"
+
+[root@server0 ~]# touch "aa bb"  #创建了一个文件
+aa     bb
+[root@server0 ~]# touch aa bb     #创建了两个文件
+aa bb
+
+
+2）单引号的应用      
+界定一个完整的字符串，并且可以实现屏蔽特殊符号的功能。   #当有特殊符号的时候双引号和单引号是有区别的  没有特殊符号的时候是没有区别的！
+[root@server0 ~]# test=11
+[root@server0 ~]# echo "$test"
+11
+[root@server0 ~]# echo '$test'
+$test
+
+
+3）反撇号或$()的应用
+使用反撇号或$()时，可以将命令执行的标准输出作为字符串存储，因此称为命令替换。
+
+每周五备份
+[root@server0 ~]# date +%Y%m%d
+20180423
+crontab -e
+00 03 * * 5   tar -czf log-`date +%Y%m%d`.tar.gz /var/log 
+
+[root@server0 ~]# ls 
+log-20180423.tar.gz
+
+步骤二：使用read命令从键盘读取变量值
+
+1）read基本用法
+执行后从会等待并接受用户输入（无任何提示的情况），并赋值给变量str：
+
+[root@server0 ~]# vim /test.sh       #新建脚本
+
+#!/bin/bash
+ read -p "请输入用户名："  name
+ read -p "请输入密码："  pass
+ useradd $name
+ echo $pass | passwd --stdin $name
+
+[root@server0 ~]# chmod +x /test.sh 
+[root@server0 ~]# /test.sh 
+请输入用户名：wangfei
+请输入密码：123
+更改用户 wangfei 的密码 。
+passwd：所有的身份验证令牌已经成功更新。
+
+2）stty终端显示控制
+将回显功能关闭（stty -echo），  #关闭回显之后命令将不在屏幕显示
+将回显功能恢复（stty echo）。
+
+[root@server0 ~]# vim /test.sh 
+
+#!/bin/bash
+ read -p "请输入用户名："  name
+ stty -echo    #关闭回显
+ read -p "请输入密码："  pass
+ stty echo     #显示回显
+ useradd $name
+ echo $pass | passwd --stdin $name
+
+
+步骤三：使用export发布全局变量
+
+默认情况下，自定义的变量为局部变量，只在当前Shell环境中有效，而在子Shell环境中无法直接使用。比如已定义的SCHOOL变量，当进入到sh或bash子Shell后，变量SCHOOL将处于未定义的状态
+1) 局部变量
+ [root@server0 ~]# xixi=11    #赋值
+[root@server0 ~]# echo $xixi   
+11
+[root@server0 ~]# bash          #进入bash
+[root@server0 ~]# echo $xixi     #输出变量
+
+[root@server0 ~]# xixi=22
+[root@server0 ~]# echo $xixi
+22
+[root@server0 ~]# bash
+[root@server0 ~]# echo $xixi
+
+[root@server0 ~]# exit
+exit
+[root@server0 ~]# echo $xixi
+22
+[root@server0 ~]# exit
+exit
+[root@server0 ~]# echo $xixi
+11
+
+2）全局变量   #系统变量都是全局变量
+
+[root@server0 ~]# export hehe=22  #全局变量赋值
+[root@server0 ~]# echo $hehe      #输出变量
+22                                         
+[root@server0 ~]# bash           #进去子进程bash
+[root@server0 ~]# echo $hehe     #输出变量值
+22
+[root@server0 ~]# bash           #进去子进程bash
+[root@server0 ~]# echo $hehe     #输出变量值
+22
+
+
+ 
+
+
+
+
+
+

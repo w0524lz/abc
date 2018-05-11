@@ -1,0 +1,233 @@
+
+shells第二天
+ 
+计算机执行代码的顺序是从上往下去执行！
+1）使用expr命令
+乘法操作应采用 \* 避免被作为Shell通配符；参与运算的整数值与运算操作符之间需要以空格分开，引用变量时必须加$符号。
+[root@zj ~]# expr 12 + 8
+20
+[root@zj ~]# expr 12 - 8
+4
+[root@zj ~]# expr 12 \* 8
+96
+[root@zj ~]# expr 12 / 8    #只能整数运算
+1
+[root@zj ~]# expr  10 % 3
+1
+[root@server0 ~]# x=1234
+[root@server0 ~]# expr $x - 10
+1224
+[root@server0 ~]# expr $x + 10
+1244
+
+2）使用$[]或$(())表达式
+乘法操作*无需转义，运算符两侧可以无空格；引用变量可省略 $ 符号；计算结果替换表达式本身，可结合echo命令输出。
+[root@server0 ~]# x=18
+[root@server0 ~]# y=12
+[root@server0 ~]# echo $[x*y]
+216
+[root@server0 ~]# echo $[x-y]
+6
+[root@server0 ~]# echo $[x+y]
+30
+[root@server0 ~]# echo $[x/y]
+
+[root@server0 ~]# echo $[10%3]   #取余运算
+1
+[root@server0 ~]# echo $[10%2]
+0
+
+3）使用let命令
+expr或$[]、$(())方式只进行运算，并不会显示结果 但是可以结合echo来查看结果 let后不跟变量符号
+[root@server0 ~]# x=18
+[root@server0 ~]# y=12
+[root@server0 ~]# let i=x+y
+[root@server0 ~]# echo $i    #查看结果
+30
+[root@server0 ~]# let i=x*y
+[root@server0 ~]# echo $i
+216
+[root@server0 ~]# let i=x/y
+[root@server0 ~]# echo $i
+1
+[root@server0 ~]# let i=x-y
+[root@server0 ~]# echo $i
+6
+
+简便运算：
+[root@svr5 ~]# let X++;  echo $X                   # X++(X=X+1)
+[root@svr5 ~]# let X--;  echo $X                   # X--(X=X-1)
+[root@svr5 ~]# let X+=78 ; echo $X                 # X+=78(X=X+78)
+[root@svr5 ~]# let X-=78 ; echo $X                 # X-=78(X=X-78)
+[root@svr5 ~]# let X*=78 ; echo $X                 # X*=78(X=X*78)
+[root@svr5 ~]# let X/=78 ; echo $X                 # X/=78(X=X/78)
+[root@svr5 ~]# let X%=78 ; echo $X                 # X%=78(X=X%79)
+
+例子：
+[root@server0 ~]# i=2
+[root@server0 ~]# let i+=2
+[root@server0 ~]# echo $i
+4
+[root@server0 ~]# let i*=3
+[root@server0 ~]# echo $i
+12
+[root@server0 ~]# let i/=2
+[root@server0 ~]# echo $i
+6
+[root@server0 ~]# let i%=4
+[root@server0 ~]# echo $i
+2
+
+1）bc交互式运算
+[root@server0 ~]# bc
+.......... 
+scale=2   #取小数点2位
+2/10
+.20
+scale=6   #取小数点6位
+2/10
+.200000
+
+2）bc非交互式运算
+
+[root@server0 ~]# echo "scale=3;2/10" | bc    # scale=3:取小数点后3位
+.200
+[root@server0 ~]# echo "scale=2;2/10" | bc
+.20
+[root@server0 ~]# echo "scale=1;2/10" | bc
+.2
+
+条件测试的基本用法
+1）语法格式
+使用“test 表达式”或者[ 表达式 ]都可以，表达式两边至少要留一个空格。
+
+字符串匹配
+比较整数值的大小
+识别文件/目录的状态
+多个条件/操作的逻辑组合
+
+test 和 [  ] 的用法：         ( ==:是判断   =:是赋值 !=不等于 )
+[root@server0 ~]# test a == b
+[root@server0 ~]# echo $?
+1
+[root@server0 ~]# test a == a
+[root@server0 ~]# echo $?
+0
+[root@server0 ~]# [ a == b ]
+[root@server0 ~]# echo $?
+1
+[root@server0 ~]# [ a == a ]
+[root@server0 ~]# echo $?
+0
+
+3）-z 检查变量的值是否未为空
+  
+
+[root@server0 ~]# [ -z $nb ]    #变量nb是否为空
+[root@server0 ~]# echo $?       #上一条命令的返回值
+0
+[root@server0 ~]# echo $nb      #查看变量nb是否为空
+
+[root@server0 ~]# nb=250         #为变量nb赋值250
+[root@server0 ~]# echo $nb      
+250
+[root@server0 ~]# [ -z $nb ]     #变量nb是否为空
+[root@server0 ~]# echo $?        #上一条命令的返回值
+1
+
+一行打多个命令
+ A && B   # 当A执行成功时，才执行B
+ A || B   # 仅当A失败时，才执行B
+ A ; B   # 执行A ，执行B
+
+
+[root@server0 ~]# vim /test.sh 
+
+#!/bin/bash
+ read -p "请输入用户名："  name
+ [ -z $name ] && exit        #当$name 为空时，执行exit（推出）或     [ ! -z $name ] || exit  
+ stty -echo
+ read -p "请输入密码："  pass
+ stty echo 
+ useradd $name
+ echo $pass | passwd --stdin $name
+
+[root@server0 ~]# [ a == a ] && echo Y || echo N    #当A 成功时执行B 当B失败时 不会执行C
+Y
+[root@server0 ~]# [ a == b ] && echo Y || echo N    #当A 失败时 B不会执行 会直接执行C
+N
+
+
+
+ 字符串比较：
+
+-eq  等于              #带e等于  带l小于 带g大于
+-ne  不等于
+-gt  大于
+-ge  大于等于
+-lt  小于
+-le  小于等于
+
+例题：
+当前登陆的用户数大于2 时 
+每分钟报警一次
+
+[root@server0 ~]# vim /root/123.sh 
+#!/bin/bash
+ A=`who | wc -l`
+ [ $A -ge 2 ] && mail -s Error root  <  /root/mail
+[root@server0 ~]# crontab -e -u root
+1 * * * *  /root/123.sh
+给执行权限 验证
+
+1）-e 判断对象是否存在（不管是目录还是文件）
+2）-d 判断对象是否为目录（存在且是目录）
+3）-f 判断对象是否为文件（存在且是文件）
+4)-r 判断对象是否可读   #此测试对root用户无效，无论文件是否设置r权限，root都可读  
+[root@server0 ~]# mkdir /mnt/123
+[root@server0 ~]# chmod 000 /mnt/123/
+[root@server0 ~]# ls -ld /mnt/123/
+d---------. 2 root root 6 4月  24 14:09 /mnt/123/
+[root@server0 ~]# [ -r /mnt/123 ]
+[root@server0 ~]# echo $?
+0
+5)-w 判断对象是否可写    #此测试同样对root用户无效，
+6）-x 判断对象是否具有可执行权限  #root或普通用户都适用；取绝于目录本身的权限
+;
+[root@server0 ~]# /root/123.sh      
+[root@server0 ~]# chmod -x /root/123.sh   
+[root@server0 ~]# /root/123.sh 
+-bash: /root/123.sh: 权限不够
+
+
+多个条件/操作的逻辑组合
+
+1）&&，逻辑与
+给定条件必须都成立，整个测试结果才为真。
+
+2）||，逻辑或
+只要其中一个条件成立，则整个测试结果为真。
+
+
+if单分支    #只能判断对
+if双分支    #判断对与错
+if多分支    #多次判断
+if  条件测试 ；then
+      命令序列1
+else 命令序列2
+fi   
+
+[root@server0 ~]# vim /root/123.sh 
+#!/bin/bash
+read -p "请输入要测试的ip:" ip
+ping -c 2 $ip > /dev/null
+if [ $? -eq 0 ];then
+   echo "tong" 
+else
+   echo "butong"
+fi
+
+
+
+
+

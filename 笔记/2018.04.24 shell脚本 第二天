@@ -1,0 +1,217 @@
+使用expr命令
+乘法操作应采用 \* 转义，避免被作为Shell通配符；参与运算的整数值与运算操作符之间需要以空格分开，引用变量时必须加$符号。
+首先定义变量X=1234，然后分别计算与78的加减乘除和求模运算结果：
+[root@svr5 ~]# X=1234                               //定义变量X
+[root@svr5 ~]# expr  $X  +  78                      //加法
+1312
+[root@svr5 ~]# expr  $X  -  78                      //减法
+1156
+[root@svr5 ~]# expr  $X  \*  78                     //乘法，操作符应添加\转义 要加\进行隔开 才能相乘
+96252
+[root@svr5 ~]# expr  $X  /  78                      //除法，仅保留整除结果
+15
+[root@svr5 ~]# expr  $X  %  78                      //求余运算
+64
+
+
+
+使用$[]或$(())表达式
+乘法操作*无需转义，可以直接相乘，运算符两侧可以无空格；引用变量可省略 $ 符号；计算结果替换表达式本身，可结合echo命令输出。
+例如：
+定义变量x=1100 y=10 
+[root@server0 ~]# expr $[x+y]  使用方括号 可以书写已一个$配上 [ ] 即可 
+1110
+[root@server0 ~]# expr $[x*y]  可直接相乘 不用加\进行隔开 
+11000
+[root@server0 ~]# expr $[x-y]  减法
+1090
+[root@server0 ~]# expr $[x/y]  除法，仅仅保留相除之后的整数
+110  
+
+
+[root@server0 ~]# let i=x+y   把算出的结果 不会显示到屏幕 会直接赋值到i的变量
+[root@server0 ~]# echo $i     查看i变量 显示的正好是x+y的数值
+1110
+
+
+let简写运算方法
+定义x=1 y=2 
+[root@server0 ~]# let  i=x+y  把算出的结果 赋值 
+[root@server0 ~]# echo $i     查看赋值
+3
+[root@server0 ~]# let i+=7    简写方法 给i变量 加7  #i+7=7 （i=i+7）
+[root@server0 ~]# echo $i     查看
+10
+[root@server0 ~]# let i*=2
+[root@server0 ~]# echo $i
+20
+[root@server0 ~]# let i-=2
+[root@server0 ~]# echo $i
+18
+
+### 这些都不可以小数点运算   liunx命令bc计算器可以小数点运算  scale可以指定小数点位数
+例如：
+[root@server0 ~]# bc
+
+10/3
+3
+
+scale=3
+
+10/3
+3.333
+
+quit 退错bc运算  
+
+在脚本中非交互式使用：
+[root@server0 ~]# echo "scale=3;3/10" | bc
+.300
+
+bc返回值 0为错 1为真 
+######################################################################################################################################
+
+使用“test 表达式”或者[ 表达式 ]都可以，表达式两边至少要留一个空格。
+echo $? 0为真  其他数字均为错 
+
+[root@server0 ~]# test a == b 
+[root@server0 ~]# echo $?
+1
+[root@server0 ~]# test a == a 
+[root@server0 ~]# echo $?
+0
+[root@server0 ~]# [ a == b ]
+[root@server0 ~]# echo $?
+0
+[root@server0 ~]# [ a == b ]
+[root@server0 ~]# echo $?
+1
+[root@server0 ~]# [ a == a ]
+[root@server0 ~]# echo $?
+0
+注明！！！
+  两个 == 是判断  
+  一个 =   是赋值 
+  !=  比较两个字符串是否不相同 
+  -z 检查变量是否是空值   真为0 假为1
+
+[root@server0 ~]# [ $USER == "root" ]
+[root@server0 ~]# echo $?
+0
+
+
+[root@server0 ~]# [ $USER !=  "root" ]  
+[root@server0 ~]# echo $?
+1
+
+
+[root@server0 ~]# [ -z $nb ]
+[root@server0 ~]# echo $?
+0
+[root@server0 ~]# nb=123
+[root@server0 ~]# [ -z $nb ]
+[root@server0 ~]# echo $?
+1
+
+
+;     可以在一行执行多个命令 仅当A成功时，才执行B 
+&&   可以在一行执行多个命令 仅当A失败时，才执行B
+||     可以在一行执行多个命令 执行A，也执行B 
+
+例子：
+#!/bin/bash 
+read -p "请输入用户名：" name
+[ -z $name ] && exit
+stty -echo
+read -p "请输入密码：" pass
+stty echo 
+[ -z $pass ] && exit
+        useradd $name
+        echo $pass | passwd --stdin $name
+
+[root@server0 ~]# [ a == a ] && echo aijia || echo N  
+a 等于 a  && 判断 是否为真 为真 则执行 echo aijia 后面echo N 不执行 
+a 等于 b  && 判断 是否为真 为假 则执行 echo N 不执行 echo aijia
+
+-eq   等于 
+-ne   不等于
+-gt   大于 
+-ge   大于等于
+-lt   小于 
+-le   小于等于 
+
+who 查看登陆了多少次   组合使用 who | wc -l 
+
+-e 存在就为真 
+-d 存在且为目录 才为真
+-f 存在且为文件 才为真 
+-r 存在且有读权限 才为真   针对当前用户 有没有读权限 
+-w 存在且有写权限 才为真   针对当前用户 有没有写权限  
+-x 存在且有执行权限 才为真 
+
+[root@server0 ~]# chmod  -r ./abc.txt  
+[root@server0 ~]# ls -ld ./abc.txt 
+--w-------. 1 root root 6691 4月  24 14:12 ./abc.txt
+[root@server0 ~]# [ -r abc.txt ] 
+[root@server0 ~]# echo  $?
+0
+切到普通用户之后  再执行相同测试  结果为“不可读”
+[zhangsan@server0 ~]$ chmod  -r ./abc.txt  
+[zhangsan@server0 ~]$ ls -ld ./abc.txt 
+--w-------. 1 root root 6691 4月  24 14:12 ./abc.txt
+[zhangsan@server0 ~]$ [ -r abc.txt ] 
+[zhangsan@server0 ~]$ echo  $?
+1
+
+-r读 -w写  哪怕本身没有rw权限 用root都可以进行读写 但是没有x执行权限 将会不可执行  需要赋予执行权限  
+
+##########################################################################################################################################
+ if 概述 
+
+单分支if  只能判断对 不能判断错  对则执行 错则没反应  
+双分支if  可以判断对和错 
+多分支if  可以进行 多次判断  
+
+   单分支if：
+案例：
+#!/bin/bash
+read -p "请输入您要测试的IP地址：" num 
+if  ping -c2 $num &> /dev/null 
+then 
+    [ $? -eq 0  ] 
+	echo "$num 网络可达"
+fi 
+
+  双分支if： 
+案例： 
+#!/bin/bash
+read -p "请输入您要测试的IP地址：" num 
+if  ping -c2 $num &> /dev/null 
+then 
+    [ $? -eq 0  ] 
+	echo "$num 网络可达"
+else
+	echo "$num 网络不可达"
+fi 
+
+  多分支if （elif 可以多次判断 ）
+例如：
+ if判断 [ 测试1 ]；then
+	命令
+  elif [ 测试2 ]；then
+	命令
+  elif [ 测试3 ]；then
+	命令
+  else 
+ 	命令
+fi
+
+
+
+
+
+
+
+
+
+
+ 

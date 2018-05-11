@@ -1,0 +1,288 @@
+　　shell 第四天
+　　
+　　一： 字符串截取及切割
+　　子串截取的三种方法
+　　[root@server0 ~]# phone=13872446891
+　　[root@server0 ~]# echo $phone
+　　13872446891
+　　[root@server0 ~]# echo ${#phone}  #统计手机号的位数
+　　11
+　　
+　　1.1） 第一种  ${变量名：起始位置：长度}
+　　
+　　[root@server0 ~]# echo ${phone:0:6}  #从第0位取（默认从0位开始），长度为6  0可以省略
+　　138724
+　　[root@server0 ~]# echo ${phone:1:6}
+　　387244
+　　[root@server0 ~]# echo ${phone:4:6}
+　　244689
+　　[root@server0 ~]# echo ${phone:8:6}  #从第8位取 取位6 只显示5位
+　　891
+　　1.2） 第二种  expr substr "$变量名" 起始位置 长度
+　　[root@server0 ~]# expr substr $phone 1 3
+　　138
+　　[root@server0 ~]# expr substr $phone 3 3
+　　872
+　　
+　　1.3) echo $变量名 | cut -b 起始位置-结束位置
+　　
+　　[root@server0 ~]# echo $phone | cut -b 3-5   #取从第三位到第五位
+　　872
+　　
+　　[root@server0 ~]# echo $phone | cut -b 3-  #从第三位开始截取到最后
+　　872446891
+　　[root@server0 ~]# echo $phone | cut -b 3,5,8  #第3位 第5位  第8位
+　　826
+　　
+　　1.随机取1位密码的案例
+　　#!/bin/bash
+　　x='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNPOQRSTUVWXYZ0123456789'
+　　y=$[RANDOM%62]
+　　pass=${x:y:1}
+　　echo $pass
+　　
+　　2.随机取8位密码
+　　#!/bin/bash
+　　x='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNPOQRSTUVWXYZ0123456789'
+　　pass=''
+　　for i in {1..8}
+　　do
+　　n=$[RANDOM%62]
+　　tmp=${x:n:1}
+　　pass=$pass$tmp
+　　done
+　　echo $pass
+　　
+　　二：字符串的替换:
+　　vim 文本替换 ：s/a/b/g
+　　2.1）格式：${变量名/old/new}
+　　[root@server0 ~]# echo $phone
+　　13872446891
+　　[root@server0 ~]# echo ${phone/8/*}  #将第一个8替换成*
+　　13*72446891
+　　[root@server0 ~]# echo ${phone//8/*}  #将全部的8替换
+　　13*72446*91
+　　
+　　
+　　
+　　
+　　
+　　
+　　
+　　
+　　
+　　
+　　2.2）字符串的匹配删除
+　　[root@server0 ~]# A=`head -1 /etc/passwd`
+　　[root@server0 ~]# echo $A
+　　root:x:0:0:root:/root:/bin/bash
+　　从左向右，最短匹配删除
+　　格式：${变量名#*关键词}
+　　[root@server0 ~]# echo $A
+　　root:x:0:0:root:/root:/bin/bash
+　　[root@server0 ~]# echo ${A#*:}
+　　x:0:0:root:/root:/bin/bash
+　　[root@server0 ~]# echo ${A##*:}
+　　/bin/bash
+　　[root@server0 ~]# echo ${A##*s}
+　　h
+　　2.3)3）从右向左，最短匹配删除
+　　格式：${变量名%关键词*}
+　　[root@server0 ~]# echo $A
+　　root:x:0:0:root:/root:/bin/bash
+　　[root@server0 ~]# echo ${A%:*}
+　　root:x:0:0:root:/root
+　　[root@server0 ~]# echo ${A%%:*}
+　　root
+　　
+　　修改文件名的后缀 将ipg改为doc
+　　[root@server0 ~]# touch {a,b,c,d,}.jpg    #将后缀为.jpg的文件名改为.doc的文件名
+　　[root@server0 ~]# ls *.jpg
+　　a.jpg            b.jpg
+　　c.jpg            d.jpg
+　　[root@server0 ~]# vim abcd.sh
+　　#!/bin/bash
+　　for i in `ls *.jpg`
+　　do
+　　mv $i ${i%.*}.doc
+　　done
+　　或
+　　#!/bin/bash
+　　for i in `ls *.$1`
+　　do
+　　mv $i ${i%.*}.$2
+　　done
+　　
+　　[root@server0 ~]# ./abcd.sh doc mp4
+　　[root@server0 ~]# ls
+　　abcd.sh  anaconda-ks.cfg  c.mp4    d.mp4      Downloads  Pictures  Templates  Videos
+　　a.mp4    b.mp4
+　　
+　　
+　　
+　　总结：
+　　1.子串捷取
+　　${变量：开始：长度}
+　　2.字串替换
+　　${变量/旧/新}
+　　${变量//旧/新}
+　　3.掐头
+　　${变量#*：}
+　　4.去尾
+　　${变量%：*}
+　　5变量赋初始值
+　　${变量：-XX}    #变量有值就输出 无值就输出初始值
+　　
+　　[root@server0 ~]# echo ${NB:-dachui}  # 尝试显示变量NB的值 无值则显示dachui
+　　dachui
+　　[root@server0 ~]# NB=789
+　　[root@server0 ~]# echo ${NB:-dachui}
+　　789
+　　
+　　
+　　
+　　
+　　
+　　
+　　
+　　
+　　
+　　
+　　
+　　
+　　请用户输入一个值 a计算1+2+3...+a 的和  没有值默认a=100 的脚本
+　　#!/bin/bash
+　　read -p "请输入一个数：" a
+　　sum=0
+　　i=1
+　　a=${a:-100}
+　　while [ $i -le $a ]
+　　do
+　　sum=$[sum+i]
+　　let i++
+　　done
+　　echo $sum
+　　
+　　[root@server0 ~]# yum -y install expect  #自动交互的软件
+　　
+　　非交互发邮件
+　　1. echo 'XX' | mail -s xx root  #短内容
+　　2. mail -s xx root < 文件    #长内容
+　　3. mail -s XX root << EOF   #导入邮件内容(可以在命令行，也可以在脚本里写)
+　　hehe
+　　xixi
+　　EOF-----------------------#内容结束
+　　
+　　非交互ssh登陆
+　　[root@server0 ~]# yum -y install expect   # 下载非交互式远程工具
+　　
+　　#!/bin/bash
+　　for i in 10 11
+　　do
+　　expect << EOF
+　　spawn ssh 172.25.0.$i                             #执行交互的程序
+　　expect "password" {send "redhat\n"}               #当看到password时输入redhat 并回车
+　　expect "#"        {send "touch /root/abc.txt\n"}  #当看到#时输入在命令行 touch /root/abc.txt 并回车
+　　expect "#"        {send "exit\n"}                 # 当看到#时 在命令行输入exit 并回车
+　　EOF
+　　done
+　　~
+　　问题1：有没有expect
+　　2：指定一个执行交互的程序
+　　3. 远程的时候有没有提示yes/on
+　　[root@server0 ~]# ssh -o StrictHostKeyChecking=no 172.25.0.10  #当第一次远程172.25.0.10主机时不检查密钥 不用输入yes/on
+　　4.expect最后一条命令不执行
+　　
+　　正则表达式：  通用符号（不分软件不分环境在计算机里通用）
+　　基本正则表达式：
+　　^     开始
+　　$     结尾
+　　[   ]    集合，取集合中的任意一个字符
+　　[ ^ ]   对集合取反， grep [^adc] a.txt
+　　.   对任意单个字符  grep . /etc/passwd
+　　*  前一个字符出现了任意次 （不允许单独出现）
+　　.*  任意所有==（linux系统中的 * 是一样的作用）
+　　\{n,m\}  前一个字符出现的n到m次
+　　\{n,\}  前一个 字符出现了n次以上
+　　\{n\}   前一个字符出现了n次
+　　
+　　
+　　
+　　
+　　
+　　
+　　
+　　正则表达式例题：
+　　过滤下载文件中包含 the 关键字
+　　[root@zj ~]# grep 'the' abc.txt
+　　过滤下载文件中丌包含 the 关键字
+　　[root@zj ~]# grep  -v 'the' abc.txt
+　　过滤下载文件中丌论大小写 the 关键字
+　　[root@zj ~]# grep  -i 'the' abc.txt
+　　过滤 test 或 taste 这两个单字
+　　[root@zj ~]# grep "t[ae]ste\{0,1\}" abc.txt
+　　过滤有 oo 的字节
+　　[root@zj ~]# grep oo abc.txt
+　　过滤丌想要 oo 前面有 g 的
+　　[root@zj ~]# grep [^g]oo abc.txt
+　　过滤 oo 前面丌想有小写字节
+　　[root@zj ~]# grep [^a-z]oo abc.txt
+　　过滤有数字的那一行
+　　[root@zj ~]# grep "[0-9]" abc.txt
+　　过滤以 the 开头的
+　　[root@zj ~]# grep "^the" abc.txt
+　　过滤以小写字母开头的
+　　[root@zj ~]# grep "^[a-z]" abc.txt
+　　过滤开头丌是英文字母
+　　
+　　[root@zj ~]# grep "^[^a-Z]" abc.txt
+　　过滤行尾结束为小数点.那一行
+　　[root@zj ~]# grep "\.$" abc.txt
+　　过滤空白行
+　　[root@zj ~]# grep "^$" abc.txt
+　　过滤出 g??d 的字串
+　　[root@zj ~]# grep "g..d" abc.txt
+　　过滤至少两个 o 以上的字串
+　　[root@zj ~]#  grep "o\{2,\}" abc.txt
+　　过滤 g 开头和 g 结尾但是两个 g 之间仅存在至少一个 o
+　　[root@zj ~]# grep "goo*g" abc.txt
+　　过滤任意数字的行
+　　[root@zj ~]# grep "[0-9]" abc.txt
+　　过滤两个 o 的字串
+　　[root@zj ~]# grep "ooo*" abc.txt
+　　过滤 g 后面接 2 到 5 个 o,然后在接一个 g 的字串
+　　[root@zj ~]# grep "go\{2,5\}" abc.txt
+　　过滤 g 后面接 2 个以上 o 的
+　　[root@zj ~]# grep "gooo*" abc.txt
+　　
+　　
+　　
+　　
+　　
+　　
+　　
+　　
+　　
+　　
+　　
+　　
+　　
+　　
+　　
+　　
+　　
+　　
+　　
+　　
+　　
+　　
+　　
+　　
+　　
+　　
+　　
+　　
+　　
+　　
+　　
+　　
